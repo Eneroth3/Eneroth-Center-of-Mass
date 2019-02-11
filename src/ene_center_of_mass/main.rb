@@ -81,9 +81,9 @@ module Eneroth
       a, b, c, d = tetrahedron
 
       Geom::Point3d.new(
-        (a.x + b.x + c.x + d.x ) / 4,
-        (a.y + b.y + c.y + d.y ) / 4,
-        (a.z + b.z + c.z + d.z ) / 4,
+        (a.x + b.x + c.x + d.x) / 4,
+        (a.y + b.y + c.y + d.y) / 4,
+        (a.z + b.z + c.z + d.z) / 4
       )
     end
 

@@ -2,18 +2,18 @@ module Eneroth
   module CenterOfMass
     module PointMath
       refine Geom::Point3d do
-        def *(factor)
-          raise ArgumentError unless factor.is_a?(Numeric)
-          Geom::Point3d.new(to_a.map { |c| c * factor } )
+        def *(other)
+          raise ArgumentError unless other.is_a?(Numeric)
+          Geom::Point3d.new(to_a.map { |c| c * other })
         end
 
-        def +(point)
-          Geom::Point3d.new(x + point.x, y + point.y, z + point.z)
+        def +(other)
+          Geom::Point3d.new(x + other.x, y + other.y, z + other.z)
         end
 
-        def /(denominator)
-          raise ArgumentError unless denominator.is_a?(Numeric)
-          Geom::Point3d.new(to_a.map { |c| c / denominator } )
+        def /(other)
+          raise ArgumentError unless other.is_a?(Numeric)
+          Geom::Point3d.new(to_a.map { |c| c / other })
         end
       end
     end
