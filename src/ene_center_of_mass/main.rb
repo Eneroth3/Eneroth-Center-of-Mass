@@ -1,8 +1,7 @@
-# TODO: Use Sketchup.require per SketchUp extension convention.
-require_relative("point_math")
-
 module Eneroth
   module CenterOfMass
+    Sketchup.require(File.join(PLUGIN_DIR, "point_math"))
+
     using PointMath
 
     # Find center of mass for entities.
