@@ -16,27 +16,15 @@ def self.center_of_grafity(entities = Sketchup.active_model.selection)
   traverse_entities(entities) do |face, transformation|
     next unless face.is_a?(Sketchup::Face)
     
-    # Get triangles from face.
-    mesh = face.mesh
-    triangles_point_indices = mesh.polygons
-    triangles = triangles_point_indices.map { |t| t.map { |i| mesh.point_at(i.abs) }}
-    
-    # Transform triangles to global coordinates.
-    triangles.each { |t| t.each { |pt| pt.transform!(transformation) }}
-    
-    triangles.each { |t| Sketchup.active_model.active_entities.add_face(t) }
-    
+    triangles = triangulate_face(face, transformation)
+
     # TEST CODE
-    #position = face.vertices.first.position.transform(transformation)
-    #puts position
-    #Sketchup.active_model.entities.add_text("Corner", position, Geom::Vector3d.new(1.m, 1.m, 1.m))
+    triangles.each { |t| Sketchup.active_model.active_entities.add_face(t) }
   end
-  
   
   # TEST CODE
   Sketchup.active_model.commit_operation
-  
-  
+ 
   divide_point(point, volume)
 end
 
@@ -62,7 +50,7 @@ end
 def self.traverse_entities(entities, transformation = IDENTITY, &block)
   entities.each do |entity|
     block.call(entity, transformation)
-    return unless instance?(entity)
+    next unless instance?(entity)
     traverse_entities(
       entity.definition.entities,
       transformation * entity.transformation,
@@ -80,4 +68,18 @@ def self.instance?(entity)
   entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)
 end
 
-
+# Get the triangles making up a face.
+#
+# @param face [Sketchup::Face]
+# @param transformation [Geom::Transformation]
+#   Transformation of the face.
+#
+# @return [Array<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d)>>]
+def self.triangulate_face(face, transformation = IDENTITY)
+  mesh = face.mesh
+  incides = mesh.polygons.flatten.map(&:abs)
+  points = incides.map { |i| mesh.point_at(i) }
+  points.each { |pt| pt.transform!(transformation) }
+  
+  points.each_slice(3).to_a
+end
