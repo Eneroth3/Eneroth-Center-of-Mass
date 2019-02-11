@@ -2,6 +2,7 @@ module Eneroth
   module CenterOfMass
     Sketchup.require(File.join(PLUGIN_DIR, "point_math"))
     Sketchup.require(File.join(PLUGIN_DIR, "vendor", "cmty-lib", "entity"))
+    Sketchup.require(File.join(PLUGIN_DIR, "vendor", "cmty-lib", "geom", "transformation"))
 
     using PointMath
 
@@ -36,9 +37,7 @@ module Eneroth
         tetrahedrons = triangles.map { |t| t.push(tip_point) }
         tetrahedrons.each do |tetrahedron|
           tetra_volume = tetrahedron_volume(tetrahedron)
-          # TODO: Negate tetra volume if transformation is flipped.
-          # tetra_volume = -tetra_volume if
-          # Transformation.flipped?(transformation)
+          tetra_volume *= -1 if LGeom::LTransformation.flipped?(transformation)
           volume += tetra_volume
           tetra_center = tetrahedron_center(tetrahedron)
           center += tetra_center * tetra_volume
