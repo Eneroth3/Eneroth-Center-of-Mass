@@ -2,6 +2,8 @@ require: rubocop-sketchup
 
 AllCops:
   DisplayCopNames: true
+  Exclude:
+    - 'src/ene_center_of_mass/vendor/**/*'
 
 Metrics/AbcSize:
   Enabled: false

@@ -1,6 +1,7 @@
 module Eneroth
   module CenterOfMass
     Sketchup.require(File.join(PLUGIN_DIR, "point_math"))
+    Sketchup.require(File.join(PLUGIN_DIR, "vendor", "cmty-lib", "entity"))
 
     using PointMath
 
@@ -101,22 +102,13 @@ module Eneroth
     def self.traverse_entities(entities, transformation = IDENTITY, &block)
       entities.each do |entity|
         block.call(entity, transformation)
-        next unless instance?(entity)
+        next unless LEntity.instance?(entity)
         traverse_entities(
           entity.definition.entities,
           transformation * entity.transformation,
           &block
         )
       end
-    end
-
-    # Test if entity is either group or component instance.
-    #
-    # @param entity [Sketchup::Entity]
-    #
-    # @return [Boolean]
-    def self.instance?(entity)
-      entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)
     end
 
     # Get the triangles making up a face.
