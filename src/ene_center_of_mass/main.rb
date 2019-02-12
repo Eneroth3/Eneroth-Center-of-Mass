@@ -2,6 +2,7 @@ module Eneroth
   module CenterOfMass
     Sketchup.require(File.join(PLUGIN_DIR, "point_math"))
     Sketchup.require(File.join(PLUGIN_DIR, "vendor", "cmty-lib", "entity"))
+    Sketchup.require(File.join(PLUGIN_DIR, "vendor", "cmty-lib", "face"))
     Sketchup.require(File.join(PLUGIN_DIR, "vendor", "cmty-lib", "geom", "transformation"))
 
     using PointMath
@@ -33,7 +34,7 @@ module Eneroth
       # multiplied by its density.
       traverse_entities(entities) do |face, transformation|
         next unless face.is_a?(Sketchup::Face)
-        triangles = triangulate_face(face, transformation)
+        triangles = LFace.triangulate(face, transformation)
         tetrahedrons = triangles.map { |t| t.push(tip_point) }
         tetrahedrons.each do |tetrahedron|
           tetra_volume = tetrahedron_volume(tetrahedron)
@@ -108,22 +109,6 @@ module Eneroth
           &block
         )
       end
-    end
-
-    # Get the triangles making up a face.
-    #
-    # @param face [Sketchup::Face]
-    # @param transformation [Geom::Transformation]
-    #   Transformation of the face.
-    #
-    # @return [Array<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d)>>]
-    def self.triangulate_face(face, transformation = IDENTITY)
-      mesh = face.mesh
-      incides = mesh.polygons.flatten.map(&:abs)
-      points = incides.map { |i| mesh.point_at(i) }
-      points.each { |pt| pt.transform!(transformation) }
-
-      points.each_slice(3).to_a
     end
   end
 end
