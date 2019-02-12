@@ -66,7 +66,8 @@ module Eneroth
     # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d)>]
     #
     # @return [Float] Volume in cubic inches. Volume is negative when
-    #   tetrahedron is "inside out" based on winding order.
+    #   tetrahedron is "inside out" based on winding order of the first 3
+    #   points.
     def self.tetrahedron_volume(tetrahedron)
       a, b, c, d = tetrahedron
 
