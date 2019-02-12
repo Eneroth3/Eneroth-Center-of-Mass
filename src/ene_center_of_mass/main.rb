@@ -63,7 +63,8 @@ module Eneroth
 
     # Calculate volume of tetrahedron.
     #
-    # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d)>]
+    # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d,
+    #   Geom::Point3d)>]
     #
     # @return [Float] Volume in cubic inches. Volume is negative when
     #   tetrahedron is "inside out" based on winding order of the first 3
@@ -76,7 +77,8 @@ module Eneroth
 
     # Calculate center of tetrahedron.
     #
-    # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d)>]
+    # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d,
+    #   Geom::Point3d)>]
     #
     # @return [Geom::Point3d]
     def self.tetrahedron_center(tetrahedron)
