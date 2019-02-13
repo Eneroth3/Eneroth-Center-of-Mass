@@ -16,8 +16,10 @@ module Eneroth
         UI.messagebox("Please select something and try again.")
         return
       end
+      Sketchup.status_text = "Calculating center of mass..."
       point = center_of_mass(selection)
       draw_cross(point, entities_bounds(selection).diagonal)
+      Sketchup.status_text = "Done."
     end
 
     # Find bounding box for entities.
