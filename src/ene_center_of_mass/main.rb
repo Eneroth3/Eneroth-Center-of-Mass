@@ -16,10 +16,32 @@ module Eneroth
         UI.messagebox("Please select something and try again.")
         return
       end
+
+      unless solid?(selection)
+        msg =
+          "The selection doesn't appear to be solid.\n\n"\
+          "Unless the selection contains open meshes that lines up to together"\
+          " form a solid the result will be unreliable."
+        return if UI.messagebox(msg, MB_OKCANCEL) == IDCANCEL
+      end
+
       Sketchup.status_text = "Calculating center of mass..."
       point = center_of_mass(selection)
       draw_cross(point, entities_bounds(selection).diagonal)
       Sketchup.status_text = "Done."
+    end
+
+    # Test if entities are solid. Unlike SketchUp's native check, nested
+    # instances are allowed here, as long as they are solid too.
+    #
+    # @param entities [Array<Sketchup::Entity>, Sketchup::Entities,
+    #   Sketchup::Selection]
+    #
+    # @return [Boolean]
+    def self.solid?(entities)
+      return false unless entities.grep(Sketchup::Edge).all? { |e| e.faces.size.even? }
+      
+      entities.all? { |e| !LEntity.instance?(e) || solid?(e.definition.entities) }
     end
 
     # Find bounding box for entities.
