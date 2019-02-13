@@ -7,6 +7,56 @@ module Eneroth
 
     using PointMath
 
+    # Find center of mass for selection and draw a crosshair over it.
+    #
+    # @return [Void]
+    def self.draw_center_of_mass
+      selection = Sketchup.active_model.selection
+      if selection.empty?
+        UI.messagebox("Please select something and try again.")
+        return
+      end
+      point = center_of_mass(selection)
+      draw_cross(point, entities_bounds(selection).diagonal)
+    end
+
+    # Find bounding box for entities.
+    #
+    # @param entities [Array<Sketchup::Entity>, Sketchup::Entities,
+    #   Sketchup::Selection]
+    #
+    # @return [Geom::BoundingBox]
+    def self.entities_bounds(entities)
+      bb = Geom::BoundingBox.new
+      entities.each { |e| bb.add(e.bounds) }
+
+      bb
+    end
+
+    # Highlight point in space by drawing 3D cross over it.
+    #
+    # @param position [Geom::Point3d]
+    # @param size [Length]
+    #
+    # @return [Void]
+    def self.draw_cross(position, size)
+      model = Sketchup.active_model
+      model.start_operation("Find Center of Gravity", true)
+
+      group = model.active_entities.add_group
+      # Avoid setting uniform scaling due to Sketchup issue.
+      # https://rubocop-sketchup.readthedocs.io/en/stable/cops_bugs/#sketchupbugsuniformscaling
+      group.transformation =
+        Geom::Transformation.new(position) *
+        Geom::Transformation.scaling(size, size, size)
+
+      group.entities.add_edges([0.5, 0, 0], [-0.5, 0, 0])
+      group.entities.add_edges([0, 0.5, 0], [0, -0.5, 0])
+      group.entities.add_edges([0, 0, 0.5], [0, 0, -0.5])
+
+      model.commit_operation
+    end
+
     # Find center of mass for entities.
     #
     # Note that no checks are done to see if the entities are solid.
@@ -112,6 +162,11 @@ module Eneroth
           &block
         )
       end
+    end
+
+    unless @loaded
+      @loaded = true
+      UI.menu("Plugins").add_item(EXTENSION.name) { draw_center_of_mass }
     end
   end
 end
