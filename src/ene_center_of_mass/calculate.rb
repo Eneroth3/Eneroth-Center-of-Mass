@@ -49,7 +49,10 @@ module Eneroth
         total_volume = 0
 
         traverse_entities(entities) do |local_entities, transformation|
-          center, volume = local_centroid(local_entities, tip_point)
+          center, volume = local_centroid(
+            local_entities,
+            tip_point.transform(transformation.inverse)
+          )
 
           # When volume is zero there is no defined centroid.
           next if volume.zero?
