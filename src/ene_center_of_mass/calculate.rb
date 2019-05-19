@@ -42,7 +42,8 @@ module Eneroth
       #   Should be somewhat close to the points in entities to reduce
       #   floating point imprecision.
       #
-      # @return [Geom::Point3d]
+      # @return [Geom::Point3d, nil]
+      #   If volume is zero, centroid is undefined (nil).
       def self.center_of_mass(entities = Sketchup.active_model.selection,
                               exclude_non_solids = false,
                               wysiwyg = true,
@@ -85,9 +86,9 @@ module Eneroth
           total_volume += volume
         end
 
-        # No need to handle zero volume here as SketchUp doesn't allow empty
-        # empty containers.
-        # TODO: May be zero volume!
+        # Avoid zero division for zero volume.
+        return nil if total_volume.zero?
+
         total_center / total_volume
       end
 
@@ -103,7 +104,7 @@ module Eneroth
       #   Should be somewhat close to the points in entities to reduce
       #   floating point imprecision.
       #
-      # @return [Array<(nil, 0)>, Array<(Geom::Point3d, Numeric)>]
+      # @return [Array<(Geom::Point3d, Numeric)>, Array<(nil, 0)>]
       #   Centroid, volume. If volume is zero, centroid is undefined (nil).
       def self.local_centroid(entities, tip_point = aprox_center(entities))
         center = Geom::Point3d.new
@@ -115,8 +116,6 @@ module Eneroth
         end
 
         # Avoid zero division for zero volume.
-        # If these entities only contain nested containers, no raw geometry,
-        # the local or non-recursive volume is zero.
         return [nil, 0] if volume.zero?
 
         [center / volume, volume]

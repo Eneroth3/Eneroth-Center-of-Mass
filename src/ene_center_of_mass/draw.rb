@@ -13,6 +13,8 @@ module Eneroth
 
     STATUS_DONE = "Done.".freeze
 
+    INVALID = "Center of mass could not be determined.".freeze
+
     # Calculate and draw center of mass.
     module Draw
       # Find center of mass for selection and draw a crosshair over it.
@@ -28,6 +30,7 @@ module Eneroth
 
         Sketchup.status_text = STATUS_WORKING
         point = Calculate.center_of_mass(selection, exclude_non_solids)
+        point.nil? && UI.messagebox(INVALID) && return
         draw_cross(point, entities_bounds(selection).diagonal)
         Sketchup.status_text = STATUS_DONE
       end
