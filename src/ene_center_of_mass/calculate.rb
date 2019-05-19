@@ -39,29 +39,49 @@ module Eneroth
         # be though of as cavities inside the body, and are regarded to have
         # negative volume.
 
-        center = Geom::Point3d.new
-        volume = 0
+        total_center = Geom::Point3d.new
+        total_volume = 0
         # Reduce floating point deviations by locating arbitrary tip within
         # body.
         tip_point = aprox_center(entities)
 
-        # TODO: Separate recursive loop of instances from loop of faces inside
-        # them and calculate the volume for each instance separately, so it can
-        # be multiplied by its density.
-        traverse_entities(entities) do |face, transformation|
-          next unless face.is_a?(Sketchup::Face)
-          triangles = LFace.triangulate(face, transformation)
+        traverse_entities(entities) do |local_entities, transformation|
+          center, volume = entities_centroid(local_entities, tip_point)
+
+          # When volume is zero centroid is NaN, NaN, Nan due to division.
+          next if volume.zero?
+
+          center.transform!(transformation)
+          # In SketchUp a flipped group/component isn't considered to have a
+          # negative volume, hence abs.
+          volume *= LGeom::LTransformation.determinant(transformation).abs
+          center *= volume
+
+          total_center += center
+          total_volume += volume
+        end
+
+        total_center / total_volume
+      end
+
+      # TODO: Document.
+      # OPTIMIZE: Return volume weighted centroid.
+      def self.entities_centroid(entities, tip_point)
+        center = Geom::Point3d.new
+        volume = 0
+
+        entities.grep(Sketchup::Face).each do |face|
+          triangles = LFace.triangulate(face)
           tetrahedrons = triangles.map { |t| t.push(tip_point) }
           tetrahedrons.each do |tetrahedron|
             tetra_volume = tetrahedron_volume(tetrahedron)
-            tetra_volume *= -1 if LGeom::LTransformation.flipped?(transformation)
             volume += tetra_volume
             tetra_center = tetrahedron_center(tetrahedron)
             center += tetra_center * tetra_volume
           end
         end
 
-        center / volume
+        [center / volume, volume]
       end
 
       # Calculate volume of tetrahedron.
@@ -99,15 +119,15 @@ module Eneroth
       # @param entities [Array<Sketchup::Entity>, Sketchup::Entities]
       # @param transformation [Geom::Transformation]
       #
-      # @yieldparam entity [Sketchup::Entity]
+      # @yieldparam entities [Sketchup::Entities]
       # @yieldparam transformation [Geom::Transformation]
-      #   The local transformation. Apply to coordinates from entity to get them
-      #   all in the same coordinate system.
+      #   The local transformation. Apply to coordinates to get them all in the
+      #   same coordinate system.
       #
       # @return [Void]
       def self.traverse_entities(entities, transformation = IDENTITY, &block)
+        block.call(entities, transformation)
         entities.each do |entity|
-          block.call(entity, transformation)
           next unless LEntity.instance?(entity)
           traverse_entities(
             entity.definition.entities,
