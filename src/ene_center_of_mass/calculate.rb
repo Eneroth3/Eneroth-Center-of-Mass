@@ -1,6 +1,7 @@
 module Eneroth
   module CenterOfMass
     Sketchup.require "#{PLUGIN_ROOT}/point_math"
+    Sketchup.require "#{PLUGIN_ROOT}/tetrahedron"
     Sketchup.require "#{PLUGIN_ROOT}/vendor/cmty-lib/geom/transformation"
     Sketchup.require "#{PLUGIN_ROOT}/vendor/cmty-lib/entity"
     Sketchup.require "#{PLUGIN_ROOT}/vendor/cmty-lib/face"
@@ -88,51 +89,15 @@ module Eneroth
         center = Geom::Point3d.new
         volume = 0
 
-        entities.grep(Sketchup::Face).each do |face|
-          triangles = LFace.triangulate(face)
-          tetrahedrons = triangles.map { |t| t.push(tip_point) }
-          tetrahedrons.each do |tetrahedron|
-            tetra_volume = tetrahedron_volume(tetrahedron)
-            volume += tetra_volume
-            tetra_center = tetrahedron_center(tetrahedron)
-            center += tetra_center * tetra_volume
-          end
+        Tetrahedron.from_entities(entities, tip_point).each do |tetrahedron|
+          volume += tetrahedron.volume
+          center += tetrahedron.center * tetrahedron.volume
         end
 
         # Avoid zero division for zero volume.
         return [nil, 0] if volume.zero?
 
         [center / volume, volume]
-      end
-
-      # Calculate volume of tetrahedron.
-      #
-      # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d,
-      #   Geom::Point3d)>]
-      #
-      # @return [Float] Volume in cubic inches. Volume is negative when
-      #   tetrahedron is "inside out" based on winding order of the first 3
-      #   points.
-      def self.tetrahedron_volume(tetrahedron)
-        a, b, c, d = tetrahedron
-
-        ((a - d) % ((b - d) * (c - d))) / 6
-      end
-
-      # Calculate center of tetrahedron.
-      #
-      # @param tetrahedron [<Array<(Geom::Point3d, Geom::Point3d, Geom::Point3d,
-      #   Geom::Point3d)>]
-      #
-      # @return [Geom::Point3d]
-      def self.tetrahedron_center(tetrahedron)
-        a, b, c, d = tetrahedron
-
-        Geom::Point3d.new(
-          (a.x + b.x + c.x + d.x) / 4,
-          (a.y + b.y + c.y + d.y) / 4,
-          (a.z + b.z + c.z + d.z) / 4
-        )
       end
 
       # Traverse entities recursively.
