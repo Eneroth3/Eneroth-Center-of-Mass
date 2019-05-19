@@ -34,6 +34,8 @@ module Eneroth
       #   Check if each entities collection represents a solid and ignore those
       #   that don't. If it is already known all entities collection represent
       #   solids, this can safely be set to false to skip redundant checks.
+      # @param wysiwyg [Boolean]
+      #   Only include visible entities with visible layers.
       # @param tip_point [Geom::Point3d]
       #   Point used internally in calculations.
       #   When entities form a closed volume, this value cancels out.
@@ -43,6 +45,7 @@ module Eneroth
       # @return [Geom::Point3d]
       def self.center_of_mass(entities = Sketchup.active_model.selection,
                               exclude_non_solids = false,
+                              wysiwyg = true,
                               tip_point = aprox_center(entities))
         # To find center of mass, iterate over all the triangles in the entities
         # and form tetrahedrons between them and an arbitrary tip point.
@@ -55,7 +58,7 @@ module Eneroth
         total_center = Geom::Point3d.new
         total_volume = 0
 
-        traverse_entities(entities) do |local_entities, transformation|
+        traverse_entities(entities, wysiwyg) do |local_entities, transformation|
           next if exclude_non_solids && !SolidCheck.solid?(local_entities, false)
 
           center, volume = local_centroid(
@@ -116,6 +119,8 @@ module Eneroth
       # Traverse entities recursively.
       #
       # @param entities [Array<Sketchup::Entity>, Sketchup::Entities]
+      # @param wysiwyg [Boolean]
+      #   Only include visible entities with visible layers.
       # @param transformation [Geom::Transformation]
       #
       # @yieldparam entities [Sketchup::Entities]
@@ -124,12 +129,14 @@ module Eneroth
       #   same coordinate system.
       #
       # @return [Void]
-      def self.traverse_entities(entities, transformation = IDENTITY, &block)
+      def self.traverse_entities(entities, wysiwyg, transformation = IDENTITY, &block)
         block.call(entities, transformation)
         entities.each do |entity|
           next unless LEntity.instance?(entity)
+          next if wysiwyg && (!entity.visible? || !entity.layer.visible?)
           traverse_entities(
             entity.definition.entities,
+            wysiwyg,
             transformation * entity.transformation,
             &block
           )
