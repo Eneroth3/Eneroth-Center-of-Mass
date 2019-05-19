@@ -22,15 +22,21 @@ module Eneroth
         bb.center
       end
 
-      # Find center of mass for entities.
+      # Calculate centroid with recursion for nested containers.
       #
       # Note that no checks are done to see if the entities are solid.
       #
       # @param entities [Array<Sketchup::Entity>, Sketchup::Entities,
       #   Sketchup::Selection]
+      # @param tip_point [Geom::Point3d]
+      #   Point used internally in calculations.
+      #   When entities form a closed volume, this value cancels out.
+      #   Should be somewhat close to the points in entities to reduce
+      #   floating point imprecision.
       #
       # @return [Geom::Point3d]
-      def self.center_of_mass(entities = Sketchup.active_model.selection)
+      def self.center_of_mass(entities = Sketchup.active_model.selection,
+                              tip_point = aprox_center(entities))
         # To find center of mass, iterate over all the triangles in the entities
         # and form tetrahedrons between them and an arbitrary tip point.
         # Weight the tetrahedron centers by the tetrahedron volume and sum them.
@@ -41,12 +47,9 @@ module Eneroth
 
         total_center = Geom::Point3d.new
         total_volume = 0
-        # Reduce floating point deviations by locating arbitrary tip within
-        # body.
-        tip_point = aprox_center(entities)
 
         traverse_entities(entities) do |local_entities, transformation|
-          center, volume = entities_centroid(local_entities, tip_point)
+          center, volume = local_centroid(local_entities, tip_point)
 
           # When volume is zero there is no defined centroid.
           next if volume.zero?
@@ -64,9 +67,21 @@ module Eneroth
         total_center / total_volume
       end
 
-      # TODO: Document.
-      # OPTIMIZE: Return volume weighted centroid.
-      def self.entities_centroid(entities, tip_point)
+      # Calculate centroid without recursion for nested containers.
+      #
+      # Note that no checks are done to see if the entities are solid.
+      #
+      # @param entities [Array<Sketchup::Entity>, Sketchup::Entities,
+      #   Sketchup::Selection]
+      # @param tip_point [Geom::Point3d]
+      #   Point used internally in calculations.
+      #   When entities form a closed volume, this value cancels out.
+      #   Should be somewhat close to the points in entities to reduce
+      #   floating point imprecision.
+      #
+      # @return [Array<(nil, 0)>, Array<(Geom::Point3d, Numeric)>]
+      #   Centroid, volume. If volume is zero, centroid is undefined (nil).
+      def self.local_centroid(entities, tip_point = aprox_center(entities))
         center = Geom::Point3d.new
         volume = 0
 
