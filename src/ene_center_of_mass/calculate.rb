@@ -58,13 +58,19 @@ module Eneroth
         total_center = Geom::Point3d.new
         total_volume = 0
 
+        # Cache result from local_centroid for faster calculations when
+        # objects re-occur.
+        cache = {}
+
         traverse_entities(entities, wysiwyg) do |local_entities, transformation|
           next if exclude_non_solids && !SolidCheck.solid?(local_entities, false)
 
-          center, volume = local_centroid(
+          cache[local_entities] ||= local_centroid(
             local_entities,
             tip_point.transform(transformation.inverse)
           )
+          center, volume = cache[local_entities]
+          center = center.clone
 
           # When volume is zero there is no defined centroid.
           next if volume.zero?
