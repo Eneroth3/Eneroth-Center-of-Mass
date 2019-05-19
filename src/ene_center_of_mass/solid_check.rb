@@ -9,12 +9,15 @@ module Eneroth
       #
       # @param entities [Array<Sketchup::Entity>, Sketchup::Entities,
       #   Sketchup::Selection]
+      # @param recursive [Boolean]
       #
       # @return [Boolean]
-      def self.solid?(entities)
+      def self.solid?(entities, recursive = true)
         unless entities.grep(Sketchup::Edge).all? { |e| e.faces.size.even? }
           return false
         end
+
+        return true unless recursive
 
         entities.all? { |e| !LEntity.instance?(e) || solid?(e.definition.entities) }
       end

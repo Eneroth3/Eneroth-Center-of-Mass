@@ -3,6 +3,10 @@ module Eneroth
     Sketchup.require "#{PLUGIN_ROOT}/solid_check"
     Sketchup.require "#{PLUGIN_ROOT}/calculate"
 
+    SOLID_PROMPT =
+      "The selection contains non-solids.\n\n"\
+      "Do you want to exclude them from center of mass calculation?".freeze
+
     # Calculate and draw center of mass.
     module Draw
       # Find center of mass for selection and draw a crosshair over it.
@@ -15,16 +19,12 @@ module Eneroth
           return
         end
 
-        unless SolidCheck.solid?(selection)
-          msg =
-            "The selection doesn't appear to be solid.\n\n"\
-            "Unless the selection contains open meshes that lines up to together"\
-            " form a solid the result will be unreliable."
-          return if UI.messagebox(msg, MB_OKCANCEL) == IDCANCEL
-        end
+        exclude_non_solids =
+          !SolidCheck.solid?(selection)\
+          && UI.messagebox(SOLID_PROMPT, MB_YESNO) == IDYES
 
         Sketchup.status_text = "Calculating center of mass..."
-        point = Calculate.center_of_mass(selection)
+        point = Calculate.center_of_mass(selection, exclude_non_solids)
         draw_cross(point, entities_bounds(selection).diagonal)
         Sketchup.status_text = "Done."
       end

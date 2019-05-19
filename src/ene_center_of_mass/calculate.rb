@@ -2,6 +2,7 @@ module Eneroth
   module CenterOfMass
     Sketchup.require "#{PLUGIN_ROOT}/point_math"
     Sketchup.require "#{PLUGIN_ROOT}/tetrahedron"
+    Sketchup.require "#{PLUGIN_ROOT}/solid_check"
     Sketchup.require "#{PLUGIN_ROOT}/vendor/cmty-lib/geom/transformation"
     Sketchup.require "#{PLUGIN_ROOT}/vendor/cmty-lib/entity"
     Sketchup.require "#{PLUGIN_ROOT}/vendor/cmty-lib/face"
@@ -29,6 +30,10 @@ module Eneroth
       #
       # @param entities [Array<Sketchup::Entity>, Sketchup::Entities,
       #   Sketchup::Selection]
+      # @param exclude_non_solids [Boolean]
+      #   Check if each entities collection represents a solid and ignore those
+      #   that don't. If it is already known all entities collection represent
+      #   solids, this can safely be set to false to skip redundant checks.
       # @param tip_point [Geom::Point3d]
       #   Point used internally in calculations.
       #   When entities form a closed volume, this value cancels out.
@@ -37,6 +42,7 @@ module Eneroth
       #
       # @return [Geom::Point3d]
       def self.center_of_mass(entities = Sketchup.active_model.selection,
+                              exclude_non_solids = false,
                               tip_point = aprox_center(entities))
         # To find center of mass, iterate over all the triangles in the entities
         # and form tetrahedrons between them and an arbitrary tip point.
@@ -50,6 +56,8 @@ module Eneroth
         total_volume = 0
 
         traverse_entities(entities) do |local_entities, transformation|
+          next if exclude_non_solids && !SolidCheck.solid?(local_entities, false)
+
           center, volume = local_centroid(
             local_entities,
             tip_point.transform(transformation.inverse)
@@ -70,6 +78,7 @@ module Eneroth
 
         # No need to handle zero volume here as SketchUp doesn't allow empty
         # empty containers.
+        # TODO: May be zero volume!
         total_center / total_volume
       end
 
