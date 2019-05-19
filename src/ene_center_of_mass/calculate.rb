@@ -48,7 +48,7 @@ module Eneroth
         traverse_entities(entities) do |local_entities, transformation|
           center, volume = entities_centroid(local_entities, tip_point)
 
-          # When volume is zero centroid is NaN, NaN, Nan due to division.
+          # When volume is zero there is no defined centroid.
           next if volume.zero?
 
           center.transform!(transformation)
@@ -80,6 +80,9 @@ module Eneroth
             center += tetra_center * tetra_volume
           end
         end
+
+        # Avoid zero division for zero volume.
+        return [nil, 0] if volume.zero?
 
         [center / volume, volume]
       end
