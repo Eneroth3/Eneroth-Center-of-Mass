@@ -7,6 +7,12 @@ module Eneroth
       "The selection contains non-solids.\n\n"\
       "Do you want to exclude them from center of mass calculation?".freeze
 
+    EMPTY_SELECTION = "Please select something and try again.".freeze
+
+    STATUS_WORKING = "Calculating center of mass...".freeze
+
+    STATUS_DONE = "Done.".freeze
+
     # Calculate and draw center of mass.
     module Draw
       # Find center of mass for selection and draw a crosshair over it.
@@ -14,19 +20,16 @@ module Eneroth
       # @return [Void]
       def self.draw_center_of_mass
         selection = Sketchup.active_model.selection
-        if selection.empty?
-          UI.messagebox("Please select something and try again.")
-          return
-        end
+        selection.empty? && UI.messagebox(EMPTY_SELECTION) && return
 
         exclude_non_solids =
           !SolidCheck.solid?(selection)\
           && UI.messagebox(SOLID_PROMPT, MB_YESNO) == IDYES
 
-        Sketchup.status_text = "Calculating center of mass..."
+        Sketchup.status_text = STATUS_WORKING
         point = Calculate.center_of_mass(selection, exclude_non_solids)
         draw_cross(point, entities_bounds(selection).diagonal)
-        Sketchup.status_text = "Done."
+        Sketchup.status_text = STATUS_DONE
       end
 
       # Find bounding box for entities.
