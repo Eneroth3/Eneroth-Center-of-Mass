@@ -9,11 +9,11 @@ module Eneroth
     path.force_encoding("UTF-8") if path.respond_to?(:force_encoding)
 
     PLUGIN_ID = File.basename(path, ".*")
-    PLUGIN_DIR = File.join(File.dirname(path), PLUGIN_ID)
+    PLUGIN_ROOT = File.join(File.dirname(path), PLUGIN_ID)
 
     EXTENSION = SketchupExtension.new(
       "Eneroth Center of Mass",
-      File.join(PLUGIN_DIR, "main")
+      File.join(PLUGIN_ROOT, "main")
     )
     EXTENSION.creator     = "Eneroth3"
     EXTENSION.description =
