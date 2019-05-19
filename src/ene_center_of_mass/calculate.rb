@@ -71,12 +71,12 @@ module Eneroth
             tip_point.transform(transformation.inverse)
           )
           center, volume = cache[local_entities]
-          center = center.clone
 
           # When volume is zero there is no defined centroid.
           next if volume.zero?
 
-          center.transform!(transformation)
+          # Create new object, shadowing old, as we don't want to change the
+          # cached Point3d.
           # In SketchUp a flipped group/component isn't considered to have a
           # negative volume, hence abs.
           volume *= LGeom::LTransformation.determinant(transformation).abs
