@@ -68,6 +68,8 @@ module Eneroth
           total_volume += volume
         end
 
+        # No need to handle zero volume here as SketchUp doesn't allow empty
+        # empty containers.
         total_center / total_volume
       end
 
@@ -95,6 +97,8 @@ module Eneroth
         end
 
         # Avoid zero division for zero volume.
+        # If these entities only contain nested containers, no raw geometry,
+        # the local or non-recursive volume is zero.
         return [nil, 0] if volume.zero?
 
         [center / volume, volume]
